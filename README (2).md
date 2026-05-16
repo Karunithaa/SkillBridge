@@ -18,7 +18,9 @@ To promote active participation, SkillBridge introduces a point-based reward sys
 ## Proposed Solution
 SkillBridge is a full-stack system that allows users to:
 - Create knowledge-sharing posts
-- View all posts
+- Create Questions
+- Answer the Questions
+- View all Questions and answers
 - Answer and upvote posts
 - Encourage participation through a point-based system
 
