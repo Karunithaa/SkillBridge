@@ -11,7 +11,7 @@ const answerSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  imageUrl: {
+  pdfUrl: {
     type: String,
     default: null,
   },
@@ -48,7 +48,7 @@ const postSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ["Coding", "Design", "Mathematics", "Science", "Information Technology", "Language", "Business", "Other"],
+    enum: ["Coding", "Design", "Mathematics", "Science", "Language", "Business", "IT", "Other"],
   },
   tags: {
     type: [String],

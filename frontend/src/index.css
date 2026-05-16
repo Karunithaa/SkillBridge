@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #004ac6 0%, #712ae2 100%);
+}
+
+.primary-gradient {
+  background: linear-gradient(135deg, #004ac6 0%, #712ae2 100%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.card-shadow {
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.06);
+}
+
+.card-shadow-hover:hover {
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
+  transform: translateY(-2px);
+}
+
+.question-card-shadow {
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.06);
+}
+
+.question-card-shadow:hover {
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
+}
+
+.ambient-card {
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.07);
+}
+
+.ambient-card:hover {
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #ffd700 0%, #ffb800 50%, #e6a300 100%);
+}
+
+.silver-gradient {
+  background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+}
+
+.bronze-gradient {
+  background: linear-gradient(135deg, #fdba74 0%, #c2410c 100%);
+}
+
+.progress-bar-fill {
+  background: linear-gradient(90deg, #712ae2, #004ac6);
+}
+
+.status-open {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-answered {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-closed {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.best-answer {
+  background: linear-gradient(135deg, #fef9c3, #fef3c7);
+  border: 1px solid #fbbf24;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #004ac6;
+  box-shadow: 0 0 0 3px rgba(0, 74, 198, 0.12);
+}
+
+.hero-gradient-text {
+  background-image: linear-gradient(135deg, #004ac6 0%, #712ae2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}

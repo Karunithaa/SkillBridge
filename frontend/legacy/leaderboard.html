@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leaderboard – SkillBridge</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .gold-gradient { background:linear-gradient(135deg,#FFD700 0%,#FFB800 50%,#E6A300 100%); }
+  .silver-gradient { background:linear-gradient(135deg,#E2E8F0 0%,#94A3B8 100%); }
+  .bronze-gradient { background:linear-gradient(135deg,#FDBA74 0%,#C2410C 100%); }
+  .primary-gradient { background:linear-gradient(135deg,#004ac6 0%,#712ae2 100%); }
+  .card-shadow { box-shadow:0 4px 20px rgba(37,99,235,0.06); }
+  .card-shadow:hover { box-shadow:0 12px 32px rgba(37,99,235,0.12); }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:16px; padding:2rem; width:90%; max-width:480px; box-shadow:0 20px 48px rgba(124,58,237,0.15); }
+  input:focus { outline:none; border-color:#004ac6; box-shadow:0 0 0 3px rgba(0,74,198,0.12); }
+  .toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(100px); background:#2e3039; color:#f0f0fb; padding:0.75rem 1.5rem; border-radius:9999px; font-size:14px; font-weight:600; transition:transform 0.3s ease; z-index:999; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode:"class",
+    theme:{ extend:{
+      colors:{"on-surface":"#191b23","on-secondary":"#ffffff","primary-container":"#2563eb","primary":"#004ac6","outline":"#737686","tertiary":"#943700","inverse-surface":"#2e3039","surface":"#faf8ff","tertiary-container":"#bc4800","on-tertiary":"#ffffff","surface-variant":"#e1e2ed","outline-variant":"#c3c6d7","on-error":"#ffffff","secondary-container":"#8a4cfc","inverse-on-surface":"#f0f0fb","surface-container-high":"#e7e7f3","surface-container":"#ededf9","on-surface-variant":"#434655","on-primary":"#ffffff","on-background":"#191b23","error":"#ba1a1a","secondary":"#712ae2","surface-container-highest":"#e1e2ed","background":"#faf8ff","on-primary-container":"#eeefff","surface-container-low":"#f3f3fe"},
+      borderRadius:{"DEFAULT":"0.25rem","lg":"16px","xl":"24px","full":"9999px"},
+      spacing:{"sm":"8px","lg":"24px","2xl":"48px","xs":"4px","3xl":"64px","base":"4px","xl":"32px","md":"16px","gutter":"24px","container-max":"1280px"},
+      fontFamily:{"body-md":["Inter"],"label-md":["Inter"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-sm":["Inter"],"display-lg":["Plus Jakarta Sans"],"body-lg":["Inter"]},
+      fontSize:{"body-md":["16px",{"lineHeight":"1.6","fontWeight":"400"}],"label-md":["14px",{"lineHeight":"1","letterSpacing":"0.01em","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"1.3","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"1.4","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"1","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"800"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}]}
+    }}
+  }
+</script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+
+<div class="toast" id="toast"></div>
+
+<!-- Register Modal -->
+<div class="modal-overlay" id="registerModal">
+  <div class="modal-box">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline-md text-headline-md">Join SkillBridge</h2>
+      <button onclick="closeModal('registerModal')" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form id="registerForm" class="flex flex-col gap-4">
+      <div>
+        <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Student Name</label>
+        <input id="regName" type="text" placeholder="Your name" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+      </div>
+      <div>
+        <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Email Address</label>
+        <input id="regEmail" type="email" placeholder="you@example.com" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+      </div>
+      <button type="submit" class="primary-gradient text-white py-3 rounded-lg font-label-md text-label-md mt-2 active:scale-95 transition-all">Create Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav class="bg-surface/80 backdrop-blur-md fixed top-0 w-full z-50 border-b border-outline-variant shadow-sm">
+  <div class="flex justify-between items-center h-16 px-md md:px-xl max-w-container-max mx-auto">
+    <span class="font-headline-md text-headline-md font-extrabold text-primary">SkillBridge</span>
+    <div class="hidden md:flex items-center gap-xl">
+      <a class="text-on-surface-variant hover:text-primary font-body-md text-body-md transition-all" href="index.html">Home</a>
+      <a class="text-on-surface-variant hover:text-primary font-body-md text-body-md transition-all" href="questions.html">Questions</a>
+      <a class="text-primary border-b-2 border-primary font-bold pb-1 font-body-md text-body-md" href="leaderboard.html">Leaderboard</a>
+      <a class="text-on-surface-variant hover:text-primary font-body-md text-body-md transition-all" href="profile.html">Profile</a>
+    </div>
+    <button onclick="openModal('registerModal')" class="primary-gradient text-white px-md py-sm rounded-full font-label-md text-label-md active:scale-95 transition-all">Join</button>
+  </div>
+</nav>
+
+<div class="flex pt-16 min-h-screen">
+  <!-- Sidebar -->
+  <aside class="hidden md:flex flex-col gap-sm py-lg h-screen w-64 fixed left-0 top-16 bg-surface border-r border-outline-variant shadow-sm z-40">
+    <div class="px-md mb-lg">
+      <div class="flex items-center gap-md p-md bg-surface-container-high rounded-xl">
+        <div class="gold-gradient w-10 h-10 rounded-lg flex items-center justify-center shadow-lg">
+          <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1;">star</span>
+        </div>
+        <div>
+          <p class="font-label-md font-bold text-primary">Leaderboard</p>
+          <p class="text-[10px] text-outline uppercase tracking-wider">Top Contributors</p>
+        </div>
+      </div>
+    </div>
+    <nav class="flex flex-col gap-1">
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full font-label-md text-label-md transition-colors" href="index.html"><span class="material-symbols-outlined">home</span><span>Home</span></a>
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full font-label-md text-label-md transition-colors" href="questions.html"><span class="material-symbols-outlined">quiz</span><span>Questions</span></a>
+      <a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-full px-4 py-3 mx-2 font-label-md text-label-md" href="leaderboard.html"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">leaderboard</span><span>Leaderboard</span></a>
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full font-label-md text-label-md transition-colors" href="profile.html"><span class="material-symbols-outlined">person</span><span>Profile</span></a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="md:ml-64 pt-12 pb-xl px-md md:px-2xl min-h-screen w-full">
+    <div class="max-w-4xl mx-auto">
+      <header class="mb-3xl text-center">
+        <h1 class="font-display-lg text-display-lg text-on-surface mb-sm">Global Leaderboard</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">Celebrating our top contributors and knowledge masters. Keep sharing to climb the ranks!</p>
+      </header>
+
+      <!-- Podium -->
+      <div class="flex flex-col md:flex-row items-end justify-center gap-lg md:gap-xl mb-3xl" id="podium">
+        <div class="flex items-center justify-center gap-4 col-span-3">
+          <div class="animate-pulse bg-surface-container-low rounded-xl h-40 w-36"></div>
+          <div class="animate-pulse bg-surface-container-low rounded-xl h-56 w-36"></div>
+          <div class="animate-pulse bg-surface-container-low rounded-xl h-32 w-36"></div>
+        </div>
+      </div>
+
+      <!-- Full table -->
+      <div class="bg-white rounded-xl card-shadow overflow-hidden">
+        <div class="flex items-center justify-between p-lg border-b border-outline-variant">
+          <h2 class="font-headline-md text-headline-md text-on-surface">All Rankings</h2>
+          <span class="font-label-sm text-label-sm text-on-surface-variant" id="userCount">Loading...</span>
+        </div>
+        <div id="rankingsList">
+          <div class="animate-pulse p-lg space-y-3">
+            <div class="h-12 bg-surface-container-low rounded-lg"></div>
+            <div class="h-12 bg-surface-container-low rounded-lg"></div>
+            <div class="h-12 bg-surface-container-low rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant md:ml-64">
+  <div class="flex justify-between items-center px-lg max-w-container-max mx-auto">
+    <span class="font-headline-md text-headline-md font-bold text-primary">SkillBridge</span>
+    <p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 SkillBridge Platform</p>
+  </div>
+</footer>
+
+<script>
+const API = 'http://localhost:8000/api';
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function showToast(msg, ok=true){ const t=document.getElementById('toast'); t.textContent=msg; t.style.background=ok?'#2e3039':'#ba1a1a'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function getInitials(name){ return name?name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?'; }
+
+function getBadgeLevel(points){
+  if(points>=200) return {label:'Legend',color:'text-amber-600',bg:'bg-amber-50',icon:'workspace_premium'};
+  if(points>=100) return {label:'Expert',color:'text-purple-600',bg:'bg-purple-50',icon:'military_tech'};
+  if(points>=50) return {label:'Advanced',color:'text-blue-600',bg:'bg-blue-50',icon:'star'};
+  if(points>=20) return {label:'Learner',color:'text-green-600',bg:'bg-green-50',icon:'school'};
+  return {label:'Newcomer',color:'text-gray-500',bg:'bg-gray-100',icon:'person'};
+}
+
+async function loadLeaderboard(){
+  try {
+    const res = await fetch(`${API}/users/leaderboard`);
+    const users = await res.json();
+    renderPodium(users.slice(0,3));
+    renderRankings(users);
+    document.getElementById('userCount').textContent = `${users.length} members`;
+  } catch(e){
+    document.getElementById('podium').innerHTML = `<p class="text-on-surface-variant font-body-md text-body-md text-center py-8 col-span-3">Could not connect to backend. Make sure the server is running on port 8000.</p>`;
+    document.getElementById('rankingsList').innerHTML = `<p class="text-on-surface-variant font-body-md text-body-md text-center py-8">No data available.</p>`;
+  }
+}
+
+function renderPodium(top){
+  if(top.length === 0){
+    document.getElementById('podium').innerHTML = `<p class="text-on-surface-variant font-body-md text-body-md text-center py-8">No users yet. Be the first to join!</p>`;
+    return;
+  }
+  const podiumOrder = top.length >= 3 ? [top[1], top[0], top[2]] : (top.length === 2 ? [top[1], top[0]] : [top[0]]);
+  const heights = top.length >= 3 ? ['h-40', 'h-56', 'h-32'] : ['h-44', 'h-56'];
+  const gradients = ['silver-gradient', 'gold-gradient', 'bronze-gradient'];
+  const textColors = ['text-gray-600', 'text-amber-600', 'text-orange-600'];
+  const medals = ['🥈', '🥇', '🥉'];
+  const ranks = top.length >= 3 ? [1, 0, 2] : [1, 0];
+
+  document.getElementById('podium').innerHTML = podiumOrder.map((u, i) => `
+    <div class="flex flex-col items-center gap-3 cursor-pointer" onclick="window.location='profile.html?name=${encodeURIComponent(u.studentName)}'">
+      <div class="w-16 h-16 rounded-full ${gradients[i]} flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white">
+        ${getInitials(u.studentName)}
+      </div>
+      <div class="text-center">
+        <p class="font-label-md text-label-md text-on-surface">${u.studentName}</p>
+        <p class="font-label-sm text-label-sm ${textColors[i]} font-bold">${u.points} pts</p>
+      </div>
+      <div class="${gradients[i]} ${heights[i]} w-32 md:w-36 rounded-t-xl flex items-start justify-center pt-3 shadow-lg relative">
+        <span class="text-3xl">${medals[i]}</span>
+        <span class="absolute bottom-3 text-white font-bold text-xl">#${ranks[i]+1}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderRankings(users){
+  if(!users.length){
+    document.getElementById('rankingsList').innerHTML = `<p class="text-on-surface-variant font-body-md text-body-md text-center py-8">No users yet.</p>`;
+    return;
+  }
+  const rankColors = ['bg-amber-50 border-l-4 border-amber-400','bg-gray-50 border-l-4 border-gray-400','bg-orange-50 border-l-4 border-orange-400'];
+  const rankIcons = ['🥇','🥈','🥉'];
+  document.getElementById('rankingsList').innerHTML = users.map((u,i)=>{
+    const badge = getBadgeLevel(u.points);
+    const isTop = i<3;
+    return `
+    <div onclick="window.location='profile.html?name=${encodeURIComponent(u.studentName)}'" class="flex items-center gap-4 px-lg py-4 ${isTop?rankColors[i]:'hover:bg-surface-container-low'} border-b border-outline-variant transition-colors cursor-pointer">
+      <div class="w-8 text-center font-bold ${isTop?'text-xl':''}">${isTop?rankIcons[i]:`#${i+1}`}</div>
+      <div class="w-10 h-10 rounded-full primary-gradient flex items-center justify-center text-white font-bold text-sm">${getInitials(u.studentName)}</div>
+      <div class="flex-1">
+        <p class="font-label-md text-label-md text-on-surface">${u.studentName}</p>
+        <div class="flex flex-wrap gap-1 mt-0.5">
+          <span class="px-2 py-0.5 ${badge.bg} ${badge.color} rounded-full text-[10px] font-bold">${badge.label}</span>
+          ${(u.badges||[]).slice(0,2).map(b=>`<span class="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-bold">${b}</span>`).join('')}
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="font-label-md text-label-md text-primary font-bold">${u.points}</p>
+        <p class="font-label-sm text-label-sm text-on-surface-variant">points</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('registerForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const name=document.getElementById('regName').value.trim(), email=document.getElementById('regEmail').value.trim();
+  if(!name||!email) return showToast('Fill all fields', false);
+  try {
+    const res=await fetch(`${API}/users/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({studentName:name,email})});
+    const data=await res.json();
+    if(res.ok){ showToast('Welcome! 🎉'); closeModal('registerModal'); e.target.reset(); loadLeaderboard(); }
+    else showToast(data.message||'Failed', false);
+  } catch{ showToast('Server error', false); }
+});
+
+document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); }); });
+
+loadLeaderboard();
+</script>
+</body>
+</html>

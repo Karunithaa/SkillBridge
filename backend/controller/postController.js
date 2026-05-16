@@ -90,9 +90,9 @@ export const addAnswer = async (req, res) => {
     if (!post) return res.status(404).json({ message: "Post not found." });
     if (post.status === "closed") return res.status(400).json({ message: "This post is closed." });
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const pdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-    post.answers.push({ studentName, answerText, imageUrl });
+    post.answers.push({ studentName, answerText, pdfUrl });
     post.status = "answered";
     await post.save();
 

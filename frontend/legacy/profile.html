@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profile – SkillBridge</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .primary-gradient { background:linear-gradient(135deg,#004ac6 0%,#712ae2 100%); }
+  .ambient-card { box-shadow:0 4px 20px rgba(37,99,235,0.07); }
+  .ambient-card:hover { box-shadow:0 12px 32px rgba(37,99,235,0.12); }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:16px; padding:2rem; width:90%; max-width:480px; box-shadow:0 20px 48px rgba(124,58,237,0.15); }
+  input:focus, textarea:focus { outline:none; border-color:#004ac6; box-shadow:0 0 0 3px rgba(0,74,198,0.12); }
+  .toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(100px); background:#2e3039; color:#f0f0fb; padding:0.75rem 1.5rem; border-radius:9999px; font-size:14px; font-weight:600; transition:transform 0.3s ease; z-index:999; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .progress-bar-fill { background:linear-gradient(90deg,#712ae2,#004ac6); }
+</style>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode:"class",
+    theme:{ extend:{
+      colors:{"on-surface":"#191b23","on-secondary":"#ffffff","primary-fixed":"#dbe1ff","primary-container":"#2563eb","primary":"#004ac6","outline":"#737686","tertiary":"#943700","inverse-surface":"#2e3039","surface":"#faf8ff","tertiary-container":"#bc4800","on-tertiary":"#ffffff","surface-variant":"#e1e2ed","outline-variant":"#c3c6d7","on-error":"#ffffff","secondary-container":"#8a4cfc","inverse-on-surface":"#f0f0fb","surface-container-high":"#e7e7f3","surface-container":"#ededf9","on-surface-variant":"#434655","on-primary":"#ffffff","on-background":"#191b23","error":"#ba1a1a","secondary":"#712ae2","surface-container-highest":"#e1e2ed","background":"#faf8ff","on-primary-container":"#eeefff","surface-container-low":"#f3f3fe"},
+      borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+      spacing:{"sm":"8px","lg":"24px","2xl":"48px","xs":"4px","3xl":"64px","base":"4px","xl":"32px","md":"16px","gutter":"24px","container-max":"1280px"},
+      fontFamily:{"body-md":["Inter"],"label-md":["Inter"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-sm":["Inter"],"display-lg":["Plus Jakarta Sans"],"body-lg":["Inter"]},
+      fontSize:{"body-md":["16px",{"lineHeight":"1.6","fontWeight":"400"}],"label-md":["14px",{"lineHeight":"1","letterSpacing":"0.01em","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"1.3","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"1.4","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"1","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"800"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}]}
+    }}
+  }
+</script>
+</head>
+<body class="bg-background font-body-md text-on-surface">
+
+<div class="toast" id="toast"></div>
+
+<!-- Badge Modal -->
+<div class="modal-overlay" id="badgeModal">
+  <div class="modal-box">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline-md text-headline-md">Add Badge</h2>
+      <button onclick="closeModal('badgeModal')" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form id="badgeForm" class="flex flex-col gap-4">
+      <div>
+        <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Badge Name</label>
+        <input id="badgeName" type="text" placeholder="e.g. Python Expert, Top Helper" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+      </div>
+      <button type="submit" class="primary-gradient text-white py-3 rounded-lg font-label-md text-label-md active:scale-95 transition-all">Add Badge</button>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <h2 class="font-headline-md text-headline-md text-error mb-3">Delete Account</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant mb-6">Are you sure you want to delete this account? This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('deleteModal')" class="flex-1 border border-outline-variant text-on-surface py-3 rounded-lg font-label-md text-label-md active:scale-95 transition-all">Cancel</button>
+      <button onclick="confirmDelete()" class="flex-1 bg-error text-on-error py-3 rounded-lg font-label-md text-label-md active:scale-95 transition-all">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant shadow-sm">
+  <div class="flex justify-between items-center h-16 px-md md:px-xl max-w-container-max mx-auto">
+    <div class="font-headline-md text-headline-md font-extrabold text-primary">SkillBridge</div>
+    <div class="hidden md:flex items-center gap-xl h-full">
+      <a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-all" href="index.html">Home</a>
+      <a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-all" href="questions.html">Questions</a>
+      <a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-all" href="leaderboard.html">Leaderboard</a>
+      <a class="text-primary border-b-2 border-primary font-bold pb-1 font-body-md text-body-md" href="profile.html">Profile</a>
+    </div>
+    <div class="flex items-center gap-md">
+      <button class="material-symbols-outlined text-on-surface-variant active:scale-95 transition-transform">notifications</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Sidebar -->
+<aside class="hidden md:flex flex-col w-64 fixed left-0 top-16 h-[calc(100vh-4rem)] bg-surface border-r border-outline-variant z-40 py-lg">
+  <nav class="flex flex-col gap-1">
+    <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full font-label-md text-label-md transition-colors" href="index.html"><span class="material-symbols-outlined">home</span><span>Home</span></a>
+    <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full font-label-md text-label-md transition-colors" href="questions.html"><span class="material-symbols-outlined">quiz</span><span>Questions</span></a>
+    <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full font-label-md text-label-md transition-colors" href="leaderboard.html"><span class="material-symbols-outlined">leaderboard</span><span>Leaderboard</span></a>
+    <a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-full px-4 py-3 mx-2 font-label-md text-label-md" href="profile.html"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">person</span><span>Profile</span></a>
+  </nav>
+</aside>
+
+<main class="flex-1 md:ml-64 p-md md:p-xl max-w-container-max mx-auto w-full pt-20">
+
+  <!-- Search bar -->
+  <div class="mb-xl max-w-lg">
+    <label class="font-label-md text-label-md text-on-surface-variant block mb-2">Look up a student profile</label>
+    <div class="flex gap-3">
+      <input id="profileSearch" type="text" placeholder="Enter student name..." class="flex-1 border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+      <button onclick="searchProfile()" class="primary-gradient text-white px-lg py-3 rounded-lg font-label-md text-label-md active:scale-95 transition-all">Search</button>
+    </div>
+  </div>
+
+  <!-- Profile Content -->
+  <div id="profileContent">
+    <div class="text-center py-16 text-on-surface-variant">
+      <span class="material-symbols-outlined text-[64px] text-outline mb-4 block">person_search</span>
+      <p class="font-body-lg text-body-lg">Search for a student by name above to view their profile.</p>
+      <p class="font-body-md text-body-md mt-2">Or <a href="leaderboard.html" class="text-primary hover:underline">browse the leaderboard</a> to discover top contributors.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant md:ml-64">
+  <div class="flex justify-between items-center px-lg max-w-container-max mx-auto">
+    <span class="font-headline-md text-headline-md font-bold text-primary">SkillBridge</span>
+    <p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 SkillBridge Platform</p>
+  </div>
+</footer>
+
+<script>
+const API = 'http://localhost:8000/api';
+let currentUser = null;
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function showToast(msg, ok=true){ const t=document.getElementById('toast'); t.textContent=msg; t.style.background=ok?'#2e3039':'#ba1a1a'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function getInitials(name){ return name?name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?'; }
+
+function getBadgeLevel(points){
+  if(points>=200) return {label:'Legend',color:'text-amber-600',bg:'bg-amber-50',icon:'workspace_premium'};
+  if(points>=100) return {label:'Expert',color:'text-purple-600',bg:'bg-purple-50',icon:'military_tech'};
+  if(points>=50) return {label:'Advanced',color:'text-blue-600',bg:'bg-blue-50',icon:'star'};
+  if(points>=20) return {label:'Learner',color:'text-green-600',bg:'bg-green-50',icon:'school'};
+  return {label:'Newcomer',color:'text-gray-500',bg:'bg-gray-100',icon:'person'};
+}
+
+function nextLevelPoints(points){
+  if(points<20) return 20;
+  if(points<50) return 50;
+  if(points<100) return 100;
+  if(points<200) return 200;
+  return null;
+}
+
+async function searchProfile(){
+  const name = document.getElementById('profileSearch').value.trim();
+  if(!name) return showToast('Enter a name to search', false);
+  try {
+    const res = await fetch(`${API}/users/${encodeURIComponent(name)}`);
+    if(res.status===404){ showToast('User not found', false); return; }
+    const user = await res.json();
+    currentUser = user;
+    renderProfile(user);
+  } catch{ showToast('Server error. Is the backend running?', false); }
+}
+
+async function loadProfileFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get('name');
+  if(name){
+    document.getElementById('profileSearch').value = name;
+    try {
+      const res = await fetch(`${API}/users/${encodeURIComponent(name)}`);
+      if(res.ok){ currentUser = await res.json(); renderProfile(currentUser); }
+    } catch{}
+  }
+}
+
+async function loadUserPosts(studentName){
+  try {
+    const res = await fetch(`${API}/posts`);
+    const posts = await res.json();
+    return posts.filter(p=>p.studentName===studentName);
+  } catch{ return []; }
+}
+
+async function renderProfile(user){
+  const badge = getBadgeLevel(user.points);
+  const nextLvl = nextLevelPoints(user.points);
+  const progress = nextLvl ? Math.min(100, Math.round((user.points/(nextLvl))*100)) : 100;
+  const joinDate = new Date(user.joinedAt).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  // Fetch posts for stats
+  const posts = await loadUserPosts(user.studentName);
+  const answersGiven = posts.reduce((s,p)=>s+p.answers.filter(a=>a.studentName===user.studentName).length,0);
+
+  const allPosts = await (await fetch(`${API}/posts`)).json().catch(()=>[]);
+  const bestAnswers = allPosts.reduce((s,p)=>s+p.answers.filter(a=>a.studentName===user.studentName&&a.isBestAnswer).length,0);
+
+  document.getElementById('profileContent').innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-lg">
+      <!-- Left column -->
+      <div class="md:col-span-4 flex flex-col gap-lg">
+        <!-- Profile Card -->
+        <section class="ambient-card bg-white rounded-xl p-xl flex flex-col items-center text-center transition-all">
+          <div class="relative w-28 h-28 mb-md">
+            <div class="w-full h-full rounded-full primary-gradient flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
+              ${getInitials(user.studentName)}
+            </div>
+            <div class="absolute bottom-1 right-1 primary-gradient text-white p-1 rounded-full border-2 border-white">
+              <span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 1;">${badge.icon}</span>
+            </div>
+          </div>
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">${user.studentName}</h2>
+          <p class="font-label-sm text-label-sm text-on-surface-variant mb-md">${user.email}</p>
+          <span class="px-3 py-1 ${badge.bg} ${badge.color} rounded-full font-label-md text-label-md mb-lg">${badge.label}</span>
+
+          <!-- Progress -->
+          <div class="w-full text-left mb-lg">
+            <div class="flex justify-between mb-sm">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Level Progress</span>
+              <span class="font-label-md text-label-md text-primary">${nextLvl ? `${user.points}/${nextLvl}` : 'MAX'}</span>
+            </div>
+            <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+              <div class="h-full progress-bar-fill rounded-full transition-all duration-700" style="width:${progress}%"></div>
+            </div>
+            ${nextLvl ? `<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">${nextLvl-user.points} pts to next level</p>` : `<p class="font-label-sm text-label-sm text-amber-600 mt-xs">🏆 Maximum level reached!</p>`}
+          </div>
+
+          <!-- Stats -->
+          <div class="grid grid-cols-3 gap-3 w-full mb-lg">
+            <div class="bg-surface-container-low rounded-lg p-3 text-center">
+              <p class="font-headline-md text-[20px] text-primary font-bold">${user.points}</p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">Points</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-3 text-center">
+              <p class="font-headline-md text-[20px] text-secondary font-bold">${posts.length}</p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">Questions</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-3 text-center">
+              <p class="font-headline-md text-[20px] text-tertiary font-bold">${bestAnswers}</p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant">Best Ans.</p>
+            </div>
+          </div>
+
+          <p class="font-label-sm text-label-sm text-on-surface-variant">Member since ${joinDate}</p>
+
+          <!-- Actions -->
+          <div class="flex flex-col gap-2 w-full mt-lg">
+            <button onclick="openModal('badgeModal')" class="primary-gradient text-white py-2 rounded-lg font-label-md text-label-md active:scale-95 transition-all">+ Add Badge</button>
+            <button onclick="openModal('deleteModal')" class="border border-error text-error py-2 rounded-lg font-label-md text-label-md active:scale-95 transition-all hover:bg-error/5">Delete Account</button>
+          </div>
+        </section>
+
+        <!-- Badges -->
+        <section class="ambient-card bg-white rounded-xl p-lg transition-all">
+          <h3 class="font-headline-md text-[18px] text-on-surface mb-md flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">military_tech</span> Badges
+          </h3>
+          ${user.badges && user.badges.length ? `
+            <div class="flex flex-wrap gap-2">
+              ${user.badges.map(b=>`<span class="px-3 py-1.5 bg-primary/10 text-primary rounded-full font-label-md text-label-md">${b}</span>`).join('')}
+            </div>` : `<p class="font-body-md text-body-md text-on-surface-variant text-center py-4">No badges yet. Keep contributing to earn badges!</p>`}
+        </section>
+      </div>
+
+      <!-- Right column -->
+      <div class="md:col-span-8 flex flex-col gap-lg">
+        <!-- Answer activity -->
+        <section class="ambient-card bg-white rounded-xl p-lg transition-all">
+          <h3 class="font-headline-md text-[18px] text-on-surface mb-md flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1;">forum</span> Contribution Summary
+          </h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-surface-container-low rounded-lg p-md text-center">
+              <p class="text-2xl font-bold text-primary">${posts.length}</p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Questions Asked</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-md text-center">
+              <p class="text-2xl font-bold text-secondary">${answersGiven}</p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Answers Given</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-md text-center">
+              <p class="text-2xl font-bold text-[#f59e0b]">${bestAnswers}</p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Best Answers</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-md text-center">
+              <p class="text-2xl font-bold text-tertiary">${user.points}</p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Total Points</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Questions -->
+        <section class="ambient-card bg-white rounded-xl p-lg transition-all">
+          <h3 class="font-headline-md text-[18px] text-on-surface mb-md flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">quiz</span> Questions Asked
+          </h3>
+          ${posts.length ? posts.map(p=>`
+            <a href="questions.html" class="flex items-start gap-3 p-3 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer border-b border-outline-variant last:border-0 block">
+              <div class="flex-1">
+                <p class="font-label-md text-label-md text-on-surface">${p.title}</p>
+                <div class="flex flex-wrap gap-2 mt-1">
+                  <span class="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-bold">${p.category}</span>
+                  <span class="px-2 py-0.5 ${p.status==='open'?'bg-green-100 text-green-700':(p.status==='answered'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-600')} rounded-full text-[10px] font-bold">${p.status}</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-label-md text-label-md text-primary">${p.answers.length} ans</p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant">${p.points} pts</p>
+              </div>
+            </a>
+          `).join('') : `<p class="font-body-md text-body-md text-on-surface-variant text-center py-6">No questions posted yet.</p>`}
+        </section>
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('badgeForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!currentUser) return showToast('No user loaded', false);
+  const badge = document.getElementById('badgeName').value.trim();
+  if(!badge) return showToast('Enter a badge name', false);
+  const updatedBadges = [...(currentUser.badges||[]), badge];
+  try {
+    const res = await fetch(`${API}/users/${currentUser._id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({badges:updatedBadges})});
+    const data = await res.json();
+    if(res.ok){ showToast('Badge added! 🏅'); closeModal('badgeModal'); e.target.reset(); currentUser=data; renderProfile(data); }
+    else showToast(data.message||'Failed', false);
+  } catch{ showToast('Server error', false); }
+});
+
+async function confirmDelete(){
+  if(!currentUser) return;
+  try {
+    const res = await fetch(`${API}/users/${currentUser._id}`,{method:'DELETE'});
+    if(res.ok){ showToast('Account deleted'); closeModal('deleteModal'); currentUser=null; document.getElementById('profileContent').innerHTML=`<div class="text-center py-16 text-on-surface-variant"><p class="font-body-lg text-body-lg">Account deleted.</p></div>`; document.getElementById('profileSearch').value=''; }
+    else showToast('Failed to delete', false);
+  } catch{ showToast('Server error', false); }
+}
+
+document.getElementById('profileSearch').addEventListener('keydown', e=>{ if(e.key==='Enter') searchProfile(); });
+document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); }); });
+
+loadProfileFromUrl();
+</script>
+</body>
+</html>

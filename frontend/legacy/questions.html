@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Questions – SkillBridge</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  body { background-color:#faf8ff; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .primary-gradient { background:linear-gradient(135deg,#004ac6 0%,#712ae2 100%); }
+  .question-card-shadow { box-shadow:0 4px 20px rgba(37,99,235,0.06); }
+  .question-card-shadow:hover { box-shadow:0 12px 32px rgba(37,99,235,0.12); }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:16px; padding:2rem; width:90%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 48px rgba(124,58,237,0.15); }
+  .modal-box-wide { max-width:720px; }
+  input:focus, textarea:focus, select:focus { outline:none; border-color:#004ac6; box-shadow:0 0 0 3px rgba(0,74,198,0.12); }
+  .toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(100px); background:#2e3039; color:#f0f0fb; padding:0.75rem 1.5rem; border-radius:9999px; font-size:14px; font-weight:600; transition:transform 0.3s ease; z-index:999; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .status-open { background:#dcfce7; color:#15803d; }
+  .status-answered { background:#dbeafe; color:#1d4ed8; }
+  .status-closed { background:#f1f5f9; color:#475569; }
+  .best-answer { background:linear-gradient(135deg,#fef9c3,#fef3c7); border:1px solid #fbbf24; }
+</style>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode:"class",
+    theme:{ extend:{
+      colors:{"on-surface":"#191b23","on-secondary":"#ffffff","surface-dim":"#d9d9e5","surface-container-lowest":"#ffffff","primary-fixed":"#dbe1ff","primary-container":"#2563eb","primary":"#004ac6","outline":"#737686","tertiary":"#943700","inverse-surface":"#2e3039","surface":"#faf8ff","tertiary-container":"#bc4800","on-tertiary":"#ffffff","on-secondary-container":"#fffbff","surface-variant":"#e1e2ed","outline-variant":"#c3c6d7","on-secondary-fixed":"#25005a","on-error":"#ffffff","secondary-container":"#8a4cfc","inverse-on-surface":"#f0f0fb","surface-container-high":"#e7e7f3","surface-container":"#ededf9","on-surface-variant":"#434655","on-primary":"#ffffff","secondary-fixed-dim":"#d2bbff","on-background":"#191b23","error":"#ba1a1a","secondary":"#712ae2","surface-bright":"#faf8ff","surface-container-highest":"#e1e2ed","background":"#faf8ff","inverse-primary":"#b4c5ff","on-primary-container":"#eeefff","surface-container-low":"#f3f3fe","primary-fixed-dim":"#b4c5ff"},
+      borderRadius:{"DEFAULT":"0.25rem","lg":"16px","xl":"24px","full":"9999px"},
+      spacing:{"sm":"8px","lg":"24px","2xl":"48px","xs":"4px","3xl":"64px","base":"4px","xl":"32px","md":"16px","gutter":"24px","container-max":"1280px"},
+      fontFamily:{"body-md":["Inter"],"label-md":["Inter"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-sm":["Inter"],"display-lg":["Plus Jakarta Sans"],"body-lg":["Inter"]},
+      fontSize:{"body-md":["16px",{"lineHeight":"1.6","fontWeight":"400"}],"label-md":["14px",{"lineHeight":"1","letterSpacing":"0.01em","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"1.3","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"1.4","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"1","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"800"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}]}
+    }}
+  }
+</script>
+</head>
+<body class="font-body-md text-on-surface">
+
+<div class="toast" id="toast"></div>
+
+<!-- Ask Modal -->
+<div class="modal-overlay" id="askModal">
+  <div class="modal-box">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-headline-md text-headline-md">Ask a Question</h2>
+      <button onclick="closeModal('askModal')" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form id="askForm" class="flex flex-col gap-4">
+      <div>
+        <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Your Name *</label>
+        <input id="askName" type="text" placeholder="studentName" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+      </div>
+      <div>
+        <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Title *</label>
+        <input id="askTitle" type="text" placeholder="What's your question?" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+      </div>
+      <div>
+        <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Description *</label>
+        <textarea id="askDesc" rows="3" placeholder="Explain in detail..." class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Category *</label>
+          <select id="askCategory" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md bg-white transition-all">
+            <option value="">Select...</option>
+            <option>Coding</option><option>Design</option><option>Mathematics</option><option>Science</option><option>Language</option><option>Business</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Points Offered</label>
+          <input id="askPoints" type="number" value="10" min="1" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+        </div>
+      </div>
+      <div>
+        <label class="font-label-md text-label-md text-on-surface-variant block mb-1">Tags (comma-separated)</label>
+        <input id="askTags" type="text" placeholder="#react, #hooks" class="w-full border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md transition-all"/>
+      </div>
+      <button type="submit" class="primary-gradient text-white py-3 rounded-lg font-label-md text-label-md mt-2 active:scale-95 transition-all">Post Question</button>
+    </form>
+  </div>
+</div>
+
+<!-- Post Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box modal-box-wide" id="detailContent">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- Top Nav -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant shadow-sm">
+  <div class="flex justify-between items-center h-16 px-md md:px-xl max-w-container-max mx-auto">
+    <span class="font-headline-md text-headline-md font-extrabold text-primary">SkillBridge</span>
+    <div class="hidden md:flex items-center gap-xl">
+      <a class="text-on-surface-variant hover:text-primary font-body-md text-body-md transition-all" href="index.html">Home</a>
+      <a class="text-primary border-b-2 border-primary font-bold pb-1 font-body-md text-body-md" href="questions.html">Questions</a>
+      <a class="text-on-surface-variant hover:text-primary font-body-md text-body-md transition-all" href="leaderboard.html">Leaderboard</a>
+      <a class="text-on-surface-variant hover:text-primary font-body-md text-body-md transition-all" href="profile.html">Profile</a>
+    </div>
+    <div class="flex items-center gap-md">
+      <div class="relative hidden sm:block">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+        <input id="searchInput" class="pl-10 pr-4 py-2 bg-surface-container rounded-full border-none focus:ring-2 focus:ring-primary/20 w-64 text-sm" placeholder="Search questions..." type="text"/>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="flex pt-16 min-h-screen">
+  <!-- Sidebar -->
+  <aside class="hidden md:flex h-screen w-64 fixed left-0 top-16 overflow-y-auto bg-surface border-r border-outline-variant flex-col gap-sm py-lg z-40">
+    <div class="px-lg mb-md">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center text-white">
+          <span class="material-symbols-outlined">school</span>
+        </div>
+        <div>
+          <p class="font-label-md font-bold text-primary">SkillBridge</p>
+          <p class="text-[10px] text-outline uppercase tracking-wider">Knowledge Exchange</p>
+        </div>
+      </div>
+    </div>
+    <nav class="flex flex-col gap-1">
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full transition-colors font-label-md text-label-md" href="index.html">
+        <span class="material-symbols-outlined">home</span><span>Home</span>
+      </a>
+      <a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-full px-4 py-3 mx-2 font-label-md text-label-md" href="questions.html">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">quiz</span><span>Questions</span>
+      </a>
+      <a onclick="openModal('askModal')" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full transition-colors font-label-md text-label-md cursor-pointer">
+        <span class="material-symbols-outlined">add_circle</span><span>Ask Question</span>
+      </a>
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full transition-colors font-label-md text-label-md" href="leaderboard.html">
+        <span class="material-symbols-outlined">leaderboard</span><span>Leaderboard</span>
+      </a>
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-full transition-colors font-label-md text-label-md" href="profile.html">
+        <span class="material-symbols-outlined">person</span><span>Profile</span>
+      </a>
+    </nav>
+    <div class="mt-auto px-lg pb-xl">
+      <button onclick="openModal('askModal')" class="w-full primary-gradient text-white font-label-md text-label-md py-4 rounded-xl shadow-lg active:scale-95 transition-all">Ask Question</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 md:ml-64 p-md md:p-xl bg-background">
+    <div class="max-w-4xl mx-auto">
+      <header class="mb-xl">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-lg">
+          <div>
+            <h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Explore Questions</h1>
+            <p class="font-body-md text-body-md text-on-surface-variant">Learn from the community or share your expertise.</p>
+          </div>
+          <div class="flex items-center gap-sm">
+            <select id="sortSelect" class="px-4 py-2 bg-white border border-outline-variant rounded-full text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
+              <option value="newest">Sort: Newest</option>
+              <option value="oldest">Sort: Oldest</option>
+              <option value="most-answers">Most Answers</option>
+            </select>
+          </div>
+        </div>
+        <!-- Category chips -->
+        <div class="flex gap-sm overflow-x-auto pb-2" id="categoryChips">
+          <button onclick="filterCategory('')" data-cat="" class="chip-btn px-5 py-2 primary-gradient text-white rounded-full text-sm font-semibold whitespace-nowrap shadow-md">All Topics</button>
+          <button onclick="filterCategory('Coding')" data-cat="Coding" class="chip-btn px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap hover:bg-outline-variant transition-colors">Coding</button>
+          <button onclick="filterCategory('Design')" data-cat="Design" class="chip-btn px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap hover:bg-outline-variant transition-colors">Design</button>
+          <button onclick="filterCategory('Mathematics')" data-cat="Mathematics" class="chip-btn px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap hover:bg-outline-variant transition-colors">Mathematics</button>
+          <button onclick="filterCategory('Science')" data-cat="Science" class="chip-btn px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap hover:bg-outline-variant transition-colors">Science</button>
+          <button onclick="filterCategory('Business')" data-cat="Business" class="chip-btn px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap hover:bg-outline-variant transition-colors">Business</button>
+          <button onclick="filterCategory('Other')" data-cat="Other" class="chip-btn px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap hover:bg-outline-variant transition-colors">Other</button>
+        </div>
+      </header>
+
+      <div id="questionsList" class="grid gap-lg">
+        <div class="animate-pulse space-y-3">
+          <div class="h-32 bg-surface-container-low rounded-lg"></div>
+          <div class="h-32 bg-surface-container-low rounded-lg"></div>
+          <div class="h-32 bg-surface-container-low rounded-lg"></div>
+        </div>
+      </div>
+
+      <div class="mt-3xl flex justify-center items-center gap-md" id="pagination"></div>
+    </div>
+  </main>
+</div>
+
+<!-- FAB -->
+<button onclick="openModal('askModal')" class="fixed bottom-lg right-lg w-16 h-16 rounded-full primary-gradient text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+  <span class="material-symbols-outlined text-[32px]">add</span>
+  <span class="absolute right-full mr-4 px-3 py-1 bg-inverse-surface text-inverse-on-surface text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Ask a Question</span>
+</button>
+
+<footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant md:ml-64">
+  <div class="flex flex-col md:flex-row justify-between items-center px-lg max-w-container-max mx-auto gap-md">
+    <span class="font-headline-md text-headline-md font-bold text-primary">SkillBridge</span>
+    <p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 SkillBridge Platform</p>
+  </div>
+</footer>
+
+<script>
+const API = 'http://localhost:8000/api';
+let allPosts = [];
+let currentCategory = '';
+let currentPage = 1;
+const PER_PAGE = 10;
+
+const CAT_COLORS = { Coding:'bg-primary text-white', Design:'bg-secondary text-white', Mathematics:'bg-[#7c3aed] text-white', Science:'bg-[#0891b2] text-white', Language:'bg-[#059669] text-white', Business:'bg-tertiary-container text-on-tertiary-container', Other:'bg-outline text-on-primary' };
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function showToast(msg, ok=true){ const t=document.getElementById('toast'); t.textContent=msg; t.style.background=ok?'#2e3039':'#ba1a1a'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function timeAgo(d){ const s=Math.floor((Date.now()-new Date(d))/1000); if(s<60) return 'just now'; if(s<3600) return `${Math.floor(s/60)}m ago`; if(s<86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; }
+function statusClass(s){ return s==='open'?'status-open':(s==='answered'?'status-answered':'status-closed'); }
+
+async function loadPosts(){
+  try {
+    const res = await fetch(`${API}/posts`);
+    allPosts = await res.json();
+    renderPosts();
+  } catch(e){
+    document.getElementById('questionsList').innerHTML = `<div class="text-center text-on-surface-variant py-12 font-body-md text-body-md">Could not connect to backend at port 8000.<br>Make sure the server is running.</div>`;
+  }
+}
+
+function filterCategory(cat){
+  currentCategory = cat;
+  currentPage = 1;
+  document.querySelectorAll('.chip-btn').forEach(b=>{
+    const active = b.dataset.cat === cat;
+    b.className = active
+      ? 'chip-btn px-5 py-2 primary-gradient text-white rounded-full text-sm font-semibold whitespace-nowrap shadow-md'
+      : 'chip-btn px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap hover:bg-outline-variant transition-colors';
+  });
+  renderPosts();
+}
+
+function getFiltered(){
+  let posts = [...allPosts];
+  if(currentCategory) posts = posts.filter(p=>p.category===currentCategory);
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  if(search) posts = posts.filter(p=>p.title.toLowerCase().includes(search)||p.description.toLowerCase().includes(search));
+  const sort = document.getElementById('sortSelect').value;
+  if(sort==='oldest') posts.sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+  else if(sort==='most-answers') posts.sort((a,b)=>b.answers.length-a.answers.length);
+  else posts.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  return posts;
+}
+
+function renderPosts(){
+  const filtered = getFiltered();
+  const total = filtered.length;
+  const pages = Math.ceil(total/PER_PAGE);
+  const start = (currentPage-1)*PER_PAGE;
+  const page = filtered.slice(start, start+PER_PAGE);
+
+  const list = document.getElementById('questionsList');
+  if(!page.length){
+    list.innerHTML = `<div class="text-center py-16 text-on-surface-variant font-body-md text-body-md">No questions found. Be the first to ask!</div>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = page.map(p=>{
+    const catCls = CAT_COLORS[p.category]||'bg-outline text-on-primary';
+    const stCls = statusClass(p.status);
+    const tags = (p.tags||[]).slice(0,3).map(t=>`<span class="text-primary font-label-sm text-label-sm bg-primary/5 px-2 py-1 rounded">${t.startsWith('#')?t:'#'+t}</span>`).join('');
+    const bestCount = p.answers.filter(a=>a.isBestAnswer).length;
+    return `
+    <article onclick="openDetail('${p._id}')" class="bg-white rounded-lg p-lg question-card-shadow transition-all border border-transparent hover:border-primary/10 group cursor-pointer">
+      <div class="flex flex-col md:flex-row gap-lg">
+        <div class="flex md:flex-col items-center md:justify-center gap-md min-w-[80px]">
+          <div class="text-center">
+            <p class="font-headline-md text-headline-md ${p.answers.length>0?'text-primary':'text-on-surface-variant'}">${p.answers.length}</p>
+            <p class="font-label-sm text-label-sm text-outline uppercase tracking-tighter">Answers</p>
+          </div>
+          <div class="flex items-center gap-1 px-3 py-1 ${p.points>10?'bg-tertiary-container/10 text-tertiary':'bg-surface-container-high text-on-surface-variant'} rounded-full">
+            <span class="font-bold">${p.points}</span>
+            <span class="material-symbols-outlined text-[16px]" ${p.points>10?"style=\"font-variation-settings:'FILL' 1;\"":''}>star</span>
+          </div>
+        </div>
+        <div class="flex-1">
+          <div class="flex flex-wrap items-center gap-sm mb-sm">
+            <span class="px-3 py-1 ${catCls} rounded-full text-[10px] font-bold uppercase tracking-wider">${p.category}</span>
+            <span class="px-3 py-1 ${stCls} rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full ${p.status==='open'?'bg-green-500':(p.status==='answered'?'bg-blue-500':'bg-gray-400')}"></span>
+              ${p.status.charAt(0).toUpperCase()+p.status.slice(1)}
+            </span>
+            ${bestCount>0?`<span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider">✓ Best Answer</span>`:''}
+          </div>
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-sm group-hover:text-primary transition-colors">${p.title}</h2>
+          <p class="font-body-md text-body-md text-on-surface-variant mb-md line-clamp-2">${p.description}</p>
+          <div class="flex flex-wrap items-center justify-between gap-md">
+            <div class="flex flex-wrap gap-2">${tags}</div>
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold">${p.studentName.charAt(0).toUpperCase()}</div>
+              <span class="font-label-md text-label-md text-on-surface">${p.studentName}</span>
+              <span class="text-outline text-label-sm">• ${timeAgo(p.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+
+  // Pagination
+  const pag = document.getElementById('pagination');
+  if(pages<=1){ pag.innerHTML=''; return; }
+  let btns = `<button onclick="changePage(${currentPage-1})" ${currentPage===1?'disabled':''} class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-50"><span class="material-symbols-outlined">chevron_left</span></button>`;
+  for(let i=1;i<=pages;i++){
+    btns += `<button onclick="changePage(${i})" class="w-10 h-10 ${i===currentPage?'primary-gradient text-white':'bg-white border border-outline-variant text-on-surface-variant hover:bg-surface-container-low'} rounded-lg font-bold">${i}</button>`;
+  }
+  btns += `<button onclick="changePage(${currentPage+1})" ${currentPage===pages?'disabled':''} class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-50"><span class="material-symbols-outlined">chevron_right</span></button>`;
+  pag.innerHTML = btns;
+}
+
+function changePage(p){ if(p<1) return; const filtered=getFiltered(); if(p>Math.ceil(filtered.length/PER_PAGE)) return; currentPage=p; renderPosts(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+async function openDetail(id){
+  try {
+    const res = await fetch(`${API}/posts/${id}`);
+    const post = await res.json();
+    renderDetail(post);
+    openModal('detailModal');
+  } catch{ showToast('Failed to load post', false); }
+}
+
+function renderDetail(post){
+  const catCls = { Coding:'bg-primary text-white', Design:'bg-secondary text-white', Mathematics:'bg-[#7c3aed] text-white', Science:'bg-[#0891b2] text-white', Language:'bg-[#059669] text-white', Business:'bg-tertiary-container text-on-tertiary-container', Other:'bg-outline text-on-primary' };
+  const cls = catCls[post.category]||'bg-outline text-on-primary';
+  const stCls = statusClass(post.status);
+  const tags = (post.tags||[]).map(t=>`<span class="text-primary font-label-sm text-label-sm bg-primary/5 px-2 py-1 rounded">${t.startsWith('#')?t:'#'+t}</span>`).join('');
+  const answersHtml = post.answers.length ? post.answers.map(a=>`
+    <div class="p-4 rounded-lg border ${a.isBestAnswer?'best-answer border-amber-300':'border-outline-variant bg-surface-container-low'}">
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-white text-[10px] font-bold">${a.studentName.charAt(0).toUpperCase()}</div>
+          <span class="font-label-md text-label-md text-on-surface">${a.studentName}</span>
+          ${a.isBestAnswer?'<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">★ Best Answer</span>':''}
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="upvoteAnswer('${post._id}','${a._id}',this)" class="flex items-center gap-1 px-2 py-1 bg-surface-container rounded-full text-label-sm font-label-sm text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-[14px]">thumb_up</span> ${a.upvotes}
+          </button>
+          ${!a.isBestAnswer && post.status!=='closed'?`<button onclick="markBest('${post._id}','${a._id}')" class="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-full text-label-sm font-label-sm hover:bg-amber-100 transition-colors"><span class="material-symbols-outlined text-[14px]">star</span>Best</button>`:''}
+        </div>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface">${a.answerText}</p>
+    </div>
+  `).join('') : `<p class="text-on-surface-variant font-body-md text-body-md text-center py-6">No answers yet. Be the first to help!</p>`;
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="flex justify-between items-start mb-4">
+      <div class="flex flex-wrap gap-2">
+        <span class="px-3 py-1 ${cls} rounded-full text-[10px] font-bold uppercase tracking-wider">${post.category}</span>
+        <span class="px-3 py-1 ${stCls} rounded-full text-[10px] font-bold uppercase tracking-wider">${post.status}</span>
+      </div>
+      <button onclick="closeModal('detailModal')" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <h2 class="font-headline-lg text-headline-lg text-on-surface mb-3">${post.title}</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant mb-3">${post.description}</p>
+    <div class="flex flex-wrap gap-2 mb-4">${tags}</div>
+    <div class="flex items-center gap-2 mb-6 pb-4 border-b border-outline-variant">
+      <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold">${post.studentName.charAt(0).toUpperCase()}</div>
+      <span class="font-label-md text-label-md text-on-surface">${post.studentName}</span>
+      <span class="text-outline text-label-sm">• ${post.points} pts offered</span>
+    </div>
+    <h3 class="font-headline-md text-[18px] text-on-surface mb-3">${post.answers.length} Answer${post.answers.length!==1?'s':''}</h3>
+    <div class="space-y-3 mb-6">${answersHtml}</div>
+    ${post.status!=='closed'?`
+    <div class="border-t border-outline-variant pt-4">
+      <h4 class="font-label-md text-label-md text-on-surface mb-3">Add Your Answer</h4>
+      <div class="flex flex-col gap-3">
+        <input id="ansName_${post._id}" type="text" placeholder="Your name" class="border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md transition-all"/>
+        <textarea id="ansText_${post._id}" rows="3" placeholder="Write your answer..." class="border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md transition-all resize-none"></textarea>
+        <button onclick="submitAnswer('${post._id}')" class="primary-gradient text-white py-3 rounded-lg font-label-md text-label-md active:scale-95 transition-all">Submit Answer (+5 pts)</button>
+      </div>
+    </div>`:'<p class="text-center text-on-surface-variant font-body-md text-body-md py-4 border-t border-outline-variant">This question is closed.</p>'}
+    <div class="flex justify-between items-center pt-4 mt-2 border-t border-outline-variant">
+      <button onclick="deletePost('${post._id}')" class="text-error font-label-sm text-label-sm hover:underline">Delete Post</button>
+    </div>
+  `;
+}
+
+async function submitAnswer(postId){
+  const name = document.getElementById(`ansName_${postId}`).value.trim();
+  const text = document.getElementById(`ansText_${postId}`).value.trim();
+  if(!name||!text) return showToast('Name and answer are required', false);
+  try {
+    const res = await fetch(`${API}/posts/${postId}/answers`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({studentName:name,answerText:text})});
+    const data = await res.json();
+    if(res.ok){ showToast('Answer submitted! +5 pts 🎉'); openDetail(postId); loadPosts(); }
+    else showToast(data.message||'Failed', false);
+  } catch{ showToast('Server error', false); }
+}
+
+async function upvoteAnswer(postId, answerId, btn){
+  try {
+    const res = await fetch(`${API}/posts/${postId}/answers/${answerId}/upvote`,{method:'PATCH'});
+    const data = await res.json();
+    if(res.ok){ btn.innerHTML=`<span class="material-symbols-outlined text-[14px]">thumb_up</span> ${data.upvotes}`; showToast('Upvoted!'); }
+    else showToast(data.message||'Failed', false);
+  } catch{ showToast('Server error', false); }
+}
+
+async function markBest(postId, answerId){
+  try {
+    const res = await fetch(`${API}/posts/${postId}/answers/${answerId}/best`,{method:'PATCH'});
+    const data = await res.json();
+    if(res.ok){ showToast('Best answer marked! +10 pts 🏆'); openDetail(postId); loadPosts(); }
+    else showToast(data.message||'Failed', false);
+  } catch{ showToast('Server error', false); }
+}
+
+async function deletePost(id){
+  if(!confirm('Delete this question?')) return;
+  try {
+    const res = await fetch(`${API}/posts/${id}`,{method:'DELETE'});
+    if(res.ok){ showToast('Post deleted'); closeModal('detailModal'); loadPosts(); }
+    else showToast('Failed to delete', false);
+  } catch{ showToast('Server error', false); }
+}
+
+document.getElementById('askForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const payload = {
+    studentName: document.getElementById('askName').value.trim(),
+    title: document.getElementById('askTitle').value.trim(),
+    description: document.getElementById('askDesc').value.trim(),
+    category: document.getElementById('askCategory').value,
+    points: parseInt(document.getElementById('askPoints').value)||10,
+    tags: document.getElementById('askTags').value.split(',').map(t=>t.trim()).filter(Boolean)
+  };
+  if(!payload.studentName||!payload.title||!payload.description||!payload.category) return showToast('Please fill all required fields', false);
+  try {
+    const res = await fetch(`${API}/posts`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data = await res.json();
+    if(res.ok){ showToast('Question posted! 🚀'); closeModal('askModal'); e.target.reset(); loadPosts(); }
+    else showToast(data.message||'Failed', false);
+  } catch{ showToast('Server error. Is the backend running?', false); }
+});
+
+document.getElementById('searchInput').addEventListener('input', ()=>{ currentPage=1; renderPosts(); });
+document.getElementById('sortSelect').addEventListener('change', ()=>{ currentPage=1; renderPosts(); });
+document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); }); });
+
+loadPosts();
+</script>
+</body>
+</html>
